@@ -72,13 +72,14 @@ Resources:
           OwnerGid: "1000"
           OwnerUid: "1000"
           Permissions: "755"
-  HelloEfsFunction:
+  UploadFile:
     Type: AWS::Serverless::Function
     DependsOn:
       - MountTargetA
       - MountTargetB
     Properties:
       CodeUri: hello_efs/
+      FunctionName: uploadFile
       Handler: app.lambda_handler
       Runtime: python3.8
       Architectures:

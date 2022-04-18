@@ -100,3 +100,6 @@ https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/s
 https://towardsdatascience.com/how-to-build-a-serverless-application-using-aws-sam-b4d595fe689f
 
 
+https://docs.amplify.aws/guides/functions/dynamodb-from-python-lambda/q/platform/js/#getting-an-item-by-primary-key-in-dynamodb-from-lambda
+
+
