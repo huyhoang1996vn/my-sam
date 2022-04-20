@@ -1,109 +1,50 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  my-aws
+  sam-app
 
-  Sample SAM Template for my-aws
+  Sample SAM Template for sam-app
 
 Globals:
   Function:
     Timeout: 3
 
 Resources:
-  EfsLambdaVpc:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: "10.0.0.0/16"
-  EfsLambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "EFS + Lambda on SAM Security Group"
-      VpcId: !Ref EfsLambdaVpc
-      SecurityGroupEgress:
-        - CidrIp: "0.0.0.0/0"
-          FromPort: 0
-          ToPort: 65535
-          IpProtocol: tcp
-      SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0"
-          FromPort: 0
-          ToPort: 65535
-          IpProtocol: tcp
-  EfsLambdaSubnetA:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref EfsLambdaVpc
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
-      MapPublicIpOnLaunch: false
-      CidrBlock: "10.0.0.0/24"
-  EfsLambdaSubnetB:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref EfsLambdaVpc
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
-      MapPublicIpOnLaunch: false
-      CidrBlock: "10.0.1.0/24"
-  EfsFileSystem:
-    Type: AWS::EFS::FileSystem
-  MountTargetA:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref EfsFileSystem
-      SubnetId: !Ref EfsLambdaSubnetA
-      SecurityGroups:
-        - !Ref EfsLambdaSecurityGroup
-  MountTargetB:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref EfsFileSystem
-      SubnetId: !Ref EfsLambdaSubnetB
-      SecurityGroups:
-        - !Ref EfsLambdaSecurityGroup
-  AccessPoint:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref EfsFileSystem
-      PosixUser:
-        Gid: "1000"
-        Uid: "1000"
-      RootDirectory:
-        Path: "/lambda"
-        CreationInfo:
-          OwnerGid: "1000"
-          OwnerUid: "1000"
-          Permissions: "755"
-  UploadFile:
+  QueryDynamo:
     Type: AWS::Serverless::Function
-    DependsOn:
-      - MountTargetA
-      - MountTargetB
     Properties:
-      CodeUri: hello_efs/
-      FunctionName: uploadFile
-      Handler: app.lambda_handler
+      FunctionName: query_dynamo
+      Handler: hello_efs.scan_dynamo.lambda_handler
       Runtime: python3.8
-      Architectures:
-        - x86_64
+      Timeout: 75
       Policies:
-        - EFSWriteAccessPolicy:
-            FileSystem: !Ref EfsFileSystem
-            AccessPoint: !Ref AccessPoint
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref EfsLambdaSecurityGroup
-        SubnetIds:
-          - !Ref EfsLambdaSubnetA
-          - !Ref EfsLambdaSubnetB
-      FileSystemConfigs:
-        - Arn: !GetAtt AccessPoint.Arn
-          LocalMountPath: /mnt/lambda
+        - AmazonDynamoDBFullAccess
+        - CloudWatchLogsFullAccess
       Events:
         HelloWorld:
           Type: Api
           Properties:
-            Path: /hello
+            # Auth: null
+            Path: /query
             Method: get
 
+  CreateDynamo:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create_dynamo
+      Handler: hello_efs.create_dynamo.lambda_handler
+      Runtime: python3.8
+      Timeout: 75
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - CloudWatchLogsFullAccess
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            # Auth: null
+            Path: /create
+            Method: post
 Outputs:
   HelloEfsApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello EFS function"
