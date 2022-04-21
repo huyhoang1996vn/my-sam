@@ -103,6 +103,6 @@ https://towardsdatascience.com/how-to-build-a-serverless-application-using-aws-s
 https://docs.amplify.aws/guides/functions/dynamodb-from-python-lambda/q/platform/js/#getting-an-item-by-primary-key-in-dynamodb-from-lambda
 
 
-# Test local
+# Run locally
 
-sam local start-api
+sam local start-api --template=template.yaml
