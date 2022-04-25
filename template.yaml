@@ -45,6 +45,25 @@ Resources:
             # Auth: null
             Path: /create
             Method: post
+
+  UploadMedia:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: upload_media
+      Handler: hello_efs.upload_media.lambda_handler
+      Runtime: python3.8
+      Timeout: 75
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - CloudWatchLogsFullAccess
+      Events:
+        UploadS3Gateway:
+          Type: Api
+          Properties:
+            # Auth: null
+            Path: /upload_media
+            Method: post
+
 Outputs:
   HelloEfsApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello EFS function"
