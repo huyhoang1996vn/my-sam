@@ -104,26 +104,34 @@ https://docs.amplify.aws/guides/functions/dynamodb-from-python-lambda/q/platform
 
 
 # Run locally
+sam local start-api --template=template.yaml 
+--profile default
 
-sam local start-api --template=template.yaml
 
+# sam build & deploy
 sam build
 sam deploy --guided
 
+
+# Connect boto3
+Option 1:
 boto3.setup_default_session(profile_name = 'arscloud-dev')
 client = boto3.client('dynamodb')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('products')
 
-
+Option 2:
 session = boto3.session.Session(profile_name='arscloud-dev')
 client = session.client('dynamodb')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('products')
 
 
-
+# Create env
 virtualenv -p python3.8 venv
+
+
+# Layer
 pip install -t _layers/python -r _layers/requirements.txt
 
 aws lambda publish-layer-version \
@@ -132,12 +140,14 @@ aws lambda publish-layer-version \
     --zip-file fileb://_layers/layer.zip \
     --compatible-runtimes python3.8
 
-
 zip -r _layers/layer.zip python    
-
-
 
 https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
 https://medium.datadriveninvestor.com/how-to-set-up-layers-python-in-aws-lambda-functions-1355519c11ed
 https://aws.plainenglish.io/creating-aws-lambda-layer-for-python-runtime-1d1bc6c5148d
 https://towardsdatascience.com/building-custom-layers-on-aws-lambda-35d17bd9abbb
+
+
+# Schedule
+https://medium.com/thelorry-product-tech-data/building-a-simple-scheduled-task-with-aws-using-lambda-function-and-amazon-cloudwatch-event-e92e5e2418cf
+
