@@ -106,3 +106,38 @@ https://docs.amplify.aws/guides/functions/dynamodb-from-python-lambda/q/platform
 # Run locally
 
 sam local start-api --template=template.yaml
+
+sam build
+sam deploy --guided
+
+boto3.setup_default_session(profile_name = 'arscloud-dev')
+client = boto3.client('dynamodb')
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('products')
+
+
+session = boto3.session.Session(profile_name='arscloud-dev')
+client = session.client('dynamodb')
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('products')
+
+
+
+virtualenv -p python3.8 venv
+pip install -t _layers/python -r _layers/requirements.txt
+
+aws lambda publish-layer-version \
+    --layer-name layer-pandas-2 \
+    --description "Layer pandas" \
+    --zip-file fileb://_layers/layer.zip \
+    --compatible-runtimes python3.8
+
+
+zip -r _layers/layer.zip python    
+
+
+
+https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
+https://medium.datadriveninvestor.com/how-to-set-up-layers-python-in-aws-lambda-functions-1355519c11ed
+https://aws.plainenglish.io/creating-aws-lambda-layer-for-python-runtime-1d1bc6c5148d
+https://towardsdatascience.com/building-custom-layers-on-aws-lambda-35d17bd9abbb

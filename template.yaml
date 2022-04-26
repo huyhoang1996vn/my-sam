@@ -9,7 +9,23 @@ Globals:
   Function:
     Timeout: 3
 
+
 Resources:
+  # libs:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: layer-pandas-3
+  #     Description: Dependencies for the blank sample app.
+  #     # ContentUri: 's3://test-media-incloud-2/my-layer.zip'
+  #     # LayerContent:
+  #     #   S3Bucket: test-media-incloud-2
+  #     #   S3Key: _layers/layer.zip
+  #     #   Version: 1
+  #     ContentUri: _layers
+  #     CompatibleRuntimes:
+  #       - python3.8
+  #       - python3.9  
+
   QueryDynamo:
     Type: AWS::Serverless::Function
     Properties:
@@ -38,6 +54,8 @@ Resources:
       Policies:
         - AmazonDynamoDBFullAccess
         - CloudWatchLogsFullAccess
+      # Layers:
+      #   - !Ref libs
       Events:
         HelloWorld:
           Type: Api
@@ -63,6 +81,9 @@ Resources:
             # Auth: null
             Path: /upload_media
             Method: post
+
+
+
 
 Outputs:
   HelloEfsApi:
