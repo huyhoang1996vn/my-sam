@@ -103,28 +103,37 @@ https://towardsdatascience.com/how-to-build-a-serverless-application-using-aws-s
 https://docs.amplify.aws/guides/functions/dynamodb-from-python-lambda/q/platform/js/#getting-an-item-by-primary-key-in-dynamodb-from-lambda
 
 
+# Config new aws
+aws configure --profile incloud-old
+cat ~/.aws/credentials
+
 # Run locally
-sam local start-api --template=template.yaml 
---profile default
+sam local start-api --template=arscloud-lambdas-old.yaml 
+--profile incloud-old
 
 
 # sam build & deploy
 sam build
-sam deploy --guided
+sam deploy --guided --template=aws_cfts/local-lambdas.yaml --profile incloud-old
+--stack-name arscloud-lambdas --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset --region ap-northeast-1
+
+sam build --template-file aws_cfts/dynamodb-tables.yaml --region ap-northeast-1 --profile incloud-old
+
+sam deploy --template-file aws_cfts/dynamodb-tables.yaml --stack-name arscloud-table --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset --region ap-northeast-1 --profile incloud-old
 
 
 # Connect boto3
 Option 1:
-boto3.setup_default_session(profile_name = 'arscloud-dev')
+boto3.setup_default_session(profile_name = 'incloud-old')
 client = boto3.client('dynamodb')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('products')
+table = dynamodb.Table('stores')
 
 Option 2:
 session = boto3.session.Session(profile_name='arscloud-dev')
 client = session.client('dynamodb')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('products')
+table = dynamodb.Table('stores')
 
 
 # Create env
@@ -151,3 +160,68 @@ https://towardsdatascience.com/building-custom-layers-on-aws-lambda-35d17bd9abbb
 # Schedule
 https://medium.com/thelorry-product-tech-data/building-a-simple-scheduled-task-with-aws-using-lambda-function-and-amazon-cloudwatch-event-e92e5e2418cf
 
+
+
+## Install layer
+```
+pip3 install pyjwt -t _layers/python  
+```
+
+## Ref
+### Cognito with boto3
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp.html
+https://docs.aws.amazon.com/cli/latest/reference/cognito-idp/index.html#cli-aws-cognito-idp
+
+
+### Create template SES
+```
+aws ses list-templates --profile sqa
+aws ses create-template --cli-input-json file://success_register.json --profile sqa
+aws ses delete-template --profile sqa --template-name en_email_invite_register
+```
+https://medium.com/intelliconnect-engineering/send-emails-with-amazon-ses-part-1-simple-ses-template-1f400ac26c3f
+https://docs.aws.amazon.com/cli/latest/reference/ses/index.html
+
+### SES with boto3 
+https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ses.html
+
+
+### DynamoDB with boto3
+https://highlandsolutions.com/blog/hands-on-examples-for-working-with-dynamodb-boto3-and-python
+
+### Verify domain in SES
+https://www.sendworks.com/support/sendx/amazon-ses-integration-guide
+
+
+# Teminal
+aws cognito-idp admin-update-user-attributes --user-pool-id ap-northeast-1_T33pNtfWO --username ars_admin --user-attributes Name="custom:role",Value="COMPANY_ADMIN" --profile incloud-old
+
+
+aws cognito-idp admin-create-user --user-pool-id ap-northeast-1_T33pNtfWO --username ars_admin --user-attributes Name="custom:role",Value="COMPANY_ADMIN" --profile incloud-old
+
+
+aws cognito-idp admin-set-user-password --user-pool-id ap-northeast-1_T33pNtfWO --username ars_admin --password 123456 --profile incloud-old
+
+aws cognito-idp list-users --user-pool-id ap-northeast-1_T33pNtfWO  --profile incloud-old
+
+
+- sam package
+  --template-file aws_cfts/user-management-endpoint.yaml
+  --s3-bucket ${SAM_TEMPLATES_BUCKET}
+  --output-template-file user-management-endpoint-packaged.yml
+  --region ap-northeast-1
+- sam deploy
+  --template-file user-management-endpoint-packaged.yml
+  --stack-name user-management-endpoint
+  --s3-bucket ${SAM_TEMPLATES_BUCKET}
+  --capabilities CAPABILITY_IAM
+  --no-fail-on-empty-changeset
+  --region ap-northeast-1
+  --parameter-overrides "
+  ParameterKey=CurrentServer,ParameterValue=${ENVIRONMENT}
+  ParameterKey=AppClientID,ParameterValue=${APP_CLIENT_ID}
+  ParameterKey=UserPoolID,ParameterValue=${USER_POOL_ID}
+  ParameterKey=LayerVersion,ParameterValue=${LAYER_VERSION}
+  ParameterKey=BMBackgroundBucket,ParameterValue=${BM_BG_BUCKET}
+  ParameterKey=ProductionRoleARN,ParameterValue=${PROD_ROLE_ARN}
+  ParameterKey=BinfileBucket,ParameterValue=${BINFILE_BUCKET}"
