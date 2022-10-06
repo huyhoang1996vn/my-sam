@@ -105,11 +105,17 @@ https://docs.amplify.aws/guides/functions/dynamodb-from-python-lambda/q/platform
 
 # Config new aws
 aws configure --profile incloud-old
+aws cloudformation delete-stack --stack-name cognito --profile arscloud-dev2
+
 cat ~/.aws/credentials
 
 # Run locally
 sam local start-api --template=arscloud-lambdas-old.yaml 
 --profile incloud-old
+
+
+# sam local start-lambda
+sam local start-lambda [OPTIONS]
 
 
 # sam build & deploy
@@ -124,16 +130,25 @@ sam deploy --template-file aws_cfts/dynamodb-tables.yaml --stack-name arscloud-t
 
 # Connect boto3
 Option 1:
-boto3.setup_default_session(profile_name = 'incloud-old')
-client = boto3.client('dynamodb')
+import boto3
+boto3.setup_default_session(profile_name = 'lico-dev')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('stores')
+u_table = dynamodb.Table('users')
+u_table.put_item(Item={'username':'ars_admin', 'role': 'SUPER_ADMIN', 'email':'ars_admin@gmail.com'})
+c_table = dynamodb.Table('companies')
+c_table.put_item(Item={'companyId':'ars'})
+d_table = dynamodb.Table('departments')
+d_table.put_item(Item={'departmentId':'department', 'companyId':'ars', 'name':'Department'})
+s_table = dynamodb.Table('stores')
+s_table.put_item(Item={'companyId':'ars','departmentId':'department', 'storeId':'store', 'name':'store'})
+d_table.put_item(Item={'deviceId':'BM003' ,'errorOccurrence':False,'lightingStatus':True, 'version':'store', 'connectionInformation':'info', 'latestUpdate':a})
+
 
 Option 2:
 session = boto3.session.Session(profile_name='arscloud-dev')
 client = session.client('dynamodb')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('stores')
+table = dynamodb.Table('users')
 
 
 # Create env
@@ -193,14 +208,27 @@ https://highlandsolutions.com/blog/hands-on-examples-for-working-with-dynamodb-b
 https://www.sendworks.com/support/sendx/amazon-ses-integration-guide
 
 
+### Export api
+aws apigateway get-export --stage-name api --parameters extensions='apigateway' --rest-api-id 6iulzc9uej --export-type swagger latestswagger2.json --profile arscloud-dev1
+
 # Teminal
+aws configure --profile arscloud-dev2
+aws cloudformation delete-stack --stack-name lico-cognito --profile lico-dev
+
 aws cognito-idp admin-update-user-attributes --user-pool-id ap-northeast-1_T33pNtfWO --username ars_admin --user-attributes Name="custom:role",Value="COMPANY_ADMIN" --profile incloud-old
 
 
-aws cognito-idp admin-create-user --user-pool-id ap-northeast-1_T33pNtfWO --username ars_admin --user-attributes Name="custom:role",Value="COMPANY_ADMIN" --profile incloud-old
+aws cognito-idp admin-create-user --user-pool-id ap-northeast-1_FVcTUGjMn --username ars_admin --user-attributes Name="custom:companyId",Value="ars" --profile arscloud-dev2
 
 
-aws cognito-idp admin-set-user-password --user-pool-id ap-northeast-1_T33pNtfWO --username ars_admin --password 123456 --profile incloud-old
+aws cognito-idp admin-set-user-password --user-pool-id ap-northeast-1_FVcTUGjMn --username ars_admin --password 123456 --profile arscloud-dev2
+
+aws cognito-idp admin-set-user-password \
+  --user-pool-id ap-northeast-1_FVcTUGjMn  \
+  --username ars_admin \
+  --password 123456 \
+  --permanent \
+  --profile arscloud-dev2
 
 aws cognito-idp list-users --user-pool-id ap-northeast-1_T33pNtfWO  --profile incloud-old
 
